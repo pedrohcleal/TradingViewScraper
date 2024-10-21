@@ -33,6 +33,9 @@ def fetch_pivos(driver) -> list[pivoDTO]:
     pivos_elemento: list[WebElement] = driver.find_elements(By.CSS_SELECTOR, table_pivo)
     lista_pivos: list[pivoDTO] = []
     for index in range(0, len([x for x in pivos_elemento]),6):
+        driver.execute_script("arguments[0].scrollIntoView();", pivos_elemento[index])
+        sleep(0.05)
+        
         lista_pivos.append(pivoDTO(
             pivo=pivos_elemento[index].text,
             classico=to_float(pivos_elemento[index+1].text),
@@ -47,6 +50,8 @@ def fetch_medias_moveis(driver) -> list[indicadorDTO]:
     mms: list[WebElement] = driver.find_elements(By.CSS_SELECTOR, table_mm)
     lista_mms: list[indicadorDTO] = []
     for index in range(0, len([x for x in mms]),3):
+        driver.execute_script("arguments[0].scrollIntoView();", mms[index])
+        sleep(0.05)
         lista_mms.append(indicadorDTO(
             nome=mms[index].text,
             valor=to_float(mms[index+1].text),
@@ -54,10 +59,12 @@ def fetch_medias_moveis(driver) -> list[indicadorDTO]:
             ))
     return lista_mms
 
-def fetch_osciladores(driver) -> list[indicadorDTO]:
+def fetch_osciladores(driver: WebDriver) -> list[indicadorDTO]:
     indicators: list[WebElement] = driver.find_elements(By.CSS_SELECTOR, table_osciladores)
     lista_osciladores: list[indicadorDTO] = []
     for index in range(0,len([x for x in indicators]),3):
+        driver.execute_script("arguments[0].scrollIntoView();", indicators[index])
+        sleep(0.05)
         lista_osciladores.append(indicadorDTO(
             nome=indicators[index].text,
             valor=to_float(indicators[index+1].text),
@@ -68,8 +75,10 @@ def fetch_osciladores(driver) -> list[indicadorDTO]:
 def to_float(strn: str) -> float | None:
     if strn == "—":
         return None
-    while strn.count('.') > 1:
-        strn = strn.replace('.', '', 1)
+    if '.' in strn:
+        strn = strn.replace('.','')
+    if ',' in strn:
+        strn = strn.replace(',','.')
     strn = strn.strip().replace('−','-')
     converted = float(strn)
     return converted
@@ -78,15 +87,19 @@ def scraper(par) -> None:
     url: str = f'https://br.tradingview.com/symbols/{par}/technicals/'
     driver.get(url=url)
     sleep(1)
-    for i in intervalos:
+    for i in intervalos[0:1]:
         bttn: WebElement = driver.find_element(By.ID, i)
         bttn.click()
+        print(f' INTERVALO = {i}')
         osciladores: list[indicadorDTO] = fetch_osciladores(driver=driver)
         medias: list[indicadorDTO] = fetch_medias_moveis(driver=driver)
         pivos: list[pivoDTO] = fetch_pivos(driver=driver)            
-        print(f' INTERVALO = {i}')
+        driver.execute_script("arguments[0].scrollIntoView();", driver.find_element(By.CSS_SELECTOR, 'span.last-JWoJqCpY.js-symbol-last'))
+        print('Osciladores: ')
         pprint(osciladores)
+        print('\nMedias=')
         pprint(medias)
+        print('\nPivos =')
         pprint(pivos)        
         print()
         
