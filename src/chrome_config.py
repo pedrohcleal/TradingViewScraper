@@ -21,8 +21,3 @@ def create_driver() -> WebDriver:
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
-
-
-def reset_driver(driver: webdriver.Chrome) -> WebDriver:
-    driver.quit()  
-    return create_driver()  
