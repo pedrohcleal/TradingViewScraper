@@ -38,8 +38,8 @@ Follow the steps below to set up the project and run the scraper.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/pedrohcleal/TradingViewScraper.git
+cd TradingViewScraper
 ```
 
 ### 2. Create a Virtual Environment
@@ -84,14 +84,13 @@ python src/main.py
 
 The script will scrape the financial data for the pairs and intervals specified in the code, outputting the results to the console.
 
-## Video Demo
-
-Watch the scraper in action:
-
-![In Action](in-action.mp4)
-
 ## Notes
 
 - The scraper is optimized for performance with WebDriver waits to ensure it only interacts with the page when elements are ready.
 - Make sure your internet connection is stable, as the scraper fetches data from TradingView.
 - You can customize the time intervals and pairs by editing the `intervals` list and the `pairs.json` file.
+
+
+## Log snapshot
+
+![In Action](log.png)
