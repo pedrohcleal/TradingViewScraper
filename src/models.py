@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class IndicatorDTO(BaseModel):
     pair: str
     interval: str
