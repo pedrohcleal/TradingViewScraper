@@ -9,7 +9,7 @@
 This scraper is designed to fetch financial data, specifically technical indicators and pivot points, from TradingView in a performant way. The scraper efficiently extracts this data for multiple asset pairs across various time intervals, using Selenium for web automation and Pydantic for data validation.
 
 PT-BR:
-Scraper foi projetado para buscar dados financeiros, especificamente indicadores técnicos e pontos pivôs, do TradingView de forma eficiente. O scraper extrai esses dados de maneira eficiente para múltiplos pares de ativos em vários intervalos de tempo, utilizando Selenium para automação web e Pydantic para validação de dados.
+Scraper projetado para buscar dados financeiros, especificamente indicadores técnicos e pontos pivôs, do TradingView de forma eficiente. O scraper extrai esses dados de maneira eficiente para múltiplos pares de ativos em vários intervalos de tempo, utilizando Selenium para automação web e Pydantic para validação de dados.
 
 ## Features
 
