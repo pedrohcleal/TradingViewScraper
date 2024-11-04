@@ -97,3 +97,5 @@ The script will scrape the financial data for the pairs and intervals specified 
 ## Log snapshot
 
 ![In Action](log.png)
+
+[YoutubeTestVideo](https://www.youtube.com/watch?v=BrAvGvnX370)
