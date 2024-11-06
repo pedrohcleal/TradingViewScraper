@@ -42,26 +42,9 @@ def fetch_pivots(driver: WebDriver, interval, pair) -> list[PivotDTO]:
     return pivot_list
 
 
-def fetch_moving_averages(driver: WebDriver, interval, pair) -> list[IndicatorDTO]:
-    ma_elements: list[WebElement] = driver.find_elements(
-        By.CSS_SELECTOR, moving_average_table
-    )
-    ma_list: list[IndicatorDTO] = []
-    for index in range(0, len(ma_elements), 3):
-        ma_list.append(
-            IndicatorDTO(
-                pair=pair,
-                interval=interval,
-                register_time=datetime.now().strftime("%d/%m/%Y %H:%M"),
-                name=ma_elements[index].text,
-                value=to_float(ma_elements[index + 1].text),
-                action=ma_elements[index + 2].text,
-            )
-        )
-    return ma_list
-
-
-def fetch_oscillators(driver: WebDriver, interval, pair) -> list[IndicatorDTO]:
+def fetch_indicators(
+    driver: WebDriver, css_selector, interval, pair
+) -> list[IndicatorDTO]:
     oscillator_elements: list[WebElement] = driver.find_elements(
         By.CSS_SELECTOR, oscillator_table
     )
@@ -91,15 +74,19 @@ def scrape_pair(pair: str) -> None:
     url: str = f"https://tradingview.com/symbols/{pair}/technicals/"
     driver.get(url)
     for interval in intervals:
-        button: WebElement = WebDriverWait(driver=driver, timeout=5).until(
+        interval_bttn: WebElement = WebDriverWait(driver=driver, timeout=5).until(
             EC.presence_of_element_located((By.ID, interval))
         )
-        button.click()
+        interval_bttn.click()
 
-        oscillators: list[IndicatorDTO] = fetch_oscillators(driver, interval, pair)
-        moving_averages: list[IndicatorDTO] = fetch_moving_averages(
-            driver, interval, pair
+        oscillators: list[IndicatorDTO] = fetch_indicators(
+            driver, oscillator_table, interval, pair
         )
+
+        moving_averages: list[IndicatorDTO] = fetch_indicators(
+            driver, moving_average_table, interval, pair
+        )
+
         pivots: list[PivotDTO] = fetch_pivots(driver, interval, pair)
 
         print(f"INTERVAL = {interval}, PAIR = {pair}")
