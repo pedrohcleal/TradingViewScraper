@@ -1,28 +1,21 @@
 # Create a virtual environment named 'venv'
-# This command will create a folder named 'venv' containing the virtual environment.
 python3 -m venv venv
 
-# Activate the virtual environment
 # On Linux or macOS, use the following command to activate the virtual environment.
 # For Windows, use: venv\Scripts\activate
 source venv/bin/activate
 
 # Install dependencies from the 'requirements.txt' file
-# This will install all the Python packages listed in the 'requirements.txt' file into the virtual environment.
 pip3 install -r requirements.txt
 
 # Install pre-commit package
-# This installs the pre-commit package, which allows you to run hooks before committing code to git.
 sudo apt install pre-commit
 
-# Run pre-commit hooks for all files in the repository
 # This will run all the pre-commit hooks for the files in your project, checking for any issues based on the defined hooks.
 pre-commit run --all-files
 
-# Install pipreqs package
 # This installs pipreqs, a tool that generates a requirements.txt file based on imports in your code.
 pip3 install pipreqs
 
 # Regenerate the 'requirements.txt' file
-# This will create a new 'requirements.txt' file in the current directory, including only the necessary dependencies from your imports.
 pipreqs . --force
