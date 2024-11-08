@@ -98,11 +98,6 @@ def scrape_pair(pair: str) -> None:
         pprint(pivots)
         print()
 
-
-def main() -> None:
+if __name__ == "__main__":
     for pair in pairs:
         scrape_pair(pair)
-
-
-if __name__ == "__main__":
-    main()
