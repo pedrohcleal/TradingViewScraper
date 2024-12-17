@@ -71,7 +71,7 @@ from contextlib import contextmanager
 @contextmanager
 def create_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless") # comentar essa linha para ver as iterações no chrome
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-notifications")
@@ -136,4 +136,4 @@ with create_driver() as driver:
 ### Bônus
 Adicione instruções no README sobre como instalar e rodar o projeto em qualquer ambiente.
 
-Bom desafio e boa codificação! 🚀
+Bom desafio! 🚀
