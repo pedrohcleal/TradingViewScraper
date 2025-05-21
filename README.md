@@ -56,11 +56,13 @@ python -m venv venv
 ### 3. Activate the Virtual Environment
 
 - On Windows:
+
   ```bash
   venv\Scripts\activate
   ```
 
 - On macOS/Linux:
+
   ```bash
   source venv/bin/activate
   ```
@@ -73,9 +75,12 @@ With the virtual environment activated, install the required dependencies from `
 pip install -r requirements.txt
 ```
 
-### 5. Configure WebDriver
+### 5. Install Playwright Deps
 
-Ensure you have ChromeDriver installed and available in your system's PATH. Alternatively, modify `chrome_config.py` to point to your ChromeDriver executable.
+```bash
+playwright install chromium
+playwright install deps chromium
+```
 
 ### 6. Run the Scraper
 
@@ -92,7 +97,6 @@ The script will scrape the financial data for the pairs and intervals specified 
 - The scraper is optimized for performance with WebDriver waits to ensure it only interacts with the page when elements are ready.
 - Make sure your internet connection is stable, as the scraper fetches data from TradingView.
 - You can customize the time intervals and pairs by editing the `intervals` list and the `pairs.json` file.
-
 
 ## Log snapshot
 

@@ -20,3 +20,11 @@ class PivotDTO(BaseModel):
     camarilla: float | None
     woodie: float | None
     dm: float | None
+
+
+class financialDTO(BaseModel):
+    pair: str
+    price: float
+    oscillators: list[IndicatorDTO]
+    moving_averages: list[IndicatorDTO]
+    pivots: list[PivotDTO]

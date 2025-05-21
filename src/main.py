@@ -1,13 +1,9 @@
-from selenium.webdriver.chrome.webdriver import WebDriver
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from chrome_config import create_driver
+import asyncio
 import json
-from pprint import pprint
 from datetime import datetime
-from models import IndicatorDTO, PivotDTO
+from models import IndicatorDTO, PivotDTO, financialDTO
+from playwright.async_api import async_playwright, Page
+import re
 
 
 def to_float(value: str) -> float | None:
@@ -17,102 +13,103 @@ def to_float(value: str) -> float | None:
     return float(value)
 
 
-def fetch_pivots(driver: WebDriver, css_selector, interval, pair) -> list[PivotDTO]:
-    pivot_elements: list[WebElement] = driver.find_elements(
-        By.CSS_SELECTOR, css_selector
-    )
-    pivot_list: list[PivotDTO] = []
-    for index in range(0, len(pivot_elements), 6):
+async def fetch_pivots(page, css_selector, interval, pair) -> list[PivotDTO]:
+    await page.wait_for_selector(css_selector)
+
+    elements = await page.locator(css_selector).all()
+    pivot_list = []
+
+    for i in range(0, len(elements), 6):
         pivot_list.append(
             PivotDTO(
                 pair=pair,
                 interval=interval,
                 register_time=datetime.now().strftime("%d/%m/%Y %H:%M"),
-                pivot=pivot_elements[index].text,
-                classic=to_float(pivot_elements[index + 1].text),
-                fibo=to_float(pivot_elements[index + 2].text),
-                camarilla=to_float(pivot_elements[index + 3].text),
-                woodie=to_float(pivot_elements[index + 4].text),
-                dm=to_float(pivot_elements[index + 5].text),
+                pivot=await elements[i].text_content(),
+                classic=to_float(await elements[i + 1].text_content()),
+                fibo=to_float(await elements[i + 2].text_content()),
+                camarilla=to_float(await elements[i + 3].text_content()),
+                woodie=to_float(await elements[i + 4].text_content()),
+                dm=to_float(await elements[i + 5].text_content()),
             )
         )
     return pivot_list
 
 
-def fetch_indicators(
-    driver: WebDriver, css_selector, interval, pair
-) -> list[IndicatorDTO]:
-    oscillator_elements: list[WebElement] = driver.find_elements(
-        By.CSS_SELECTOR, css_selector
-    )
-    oscillator_list: list[IndicatorDTO] = []
-    for index in range(0, len(oscillator_elements), 3):
-        oscillator_list.append(
+async def fetch_indicators(page, css_selector, interval, pair) -> list[IndicatorDTO]:
+    await page.wait_for_selector(css_selector)
+
+    elements = await page.locator(css_selector).all()
+    indicator_list = []
+
+    for i in range(0, len(elements), 3):
+        indicator_list.append(
             IndicatorDTO(
                 pair=pair,
                 interval=interval,
                 register_time=datetime.now().strftime("%d/%m/%Y %H:%M"),
-                name=oscillator_elements[index].text,
-                value=to_float(oscillator_elements[index + 1].text),
-                action=oscillator_elements[index + 2].text,
+                name=await elements[i].text_content(),
+                value=to_float(await elements[i + 1].text_content()),
+                action=await elements[i + 2].text_content(),
             )
         )
-    return oscillator_list
+    return indicator_list
 
 
-def scrape_pair(pair: str) -> None:
-    driver: WebDriver = create_driver()
-    url: str = f"https://tradingview.com/symbols/{pair}/technicals/"
-    driver.get(url)
+async def fetch_price(page: Page) -> float:
+    seletor = ".lastContainer-zoF9r75I"
+    await page.wait_for_selector(seletor)
+    element = page.locator(seletor).first
+    price = await element.text_content()
 
-    oscillator_table = "div:nth-child(1)> div.tableWrapper-hvDpy38G > table > tbody > tr.row-hvDpy38G > *"
-    moving_average_table = "div.container-hvDpy38G.maTable-kg4MJrFB.tableWithAction-kg4MJrFB.tabletVertical-kg4MJrFB.tabletVertical-hvDpy38G > div.tableWrapper-hvDpy38G > table > tbody > tr.row-hvDpy38G > td"
-    pivot_table = "div.container-hvDpy38G.tabletVertical-hvDpy38G > div.container-Tv7LSjUz > div.wrapper-Tv7LSjUz > div > table > tbody > tr.row-hvDpy38G > td"
+    if price is not None:
+        price_clean = re.sub(r"\D", "", price)
+    return float(price_clean)
 
-    intervals: list[str] = [
-        "1m",
-        "5m",
-        "15m",
-        "30m",
-        "1h",
-        "2h",
-        "4h",
-        "1D",
-        "1W",
-        "1M",
-    ]
+
+async def scrape_pair(pair: str, page: Page):
+    url = f"https://tradingview.com/symbols/{pair}/technicals/"
+
+    await page.goto(url, wait_until="domcontentloaded")
+
+    oscillator_selector = "div:nth-child(1)> div.tableWrapper-hvDpy38G > table > tbody > tr.row-hvDpy38G > *"
+    moving_avg_selector = "div.container-hvDpy38G.maTable-kg4MJrFB.tableWithAction-kg4MJrFB.tabletVertical-kg4MJrFB.tabletVertical-hvDpy38G > div.tableWrapper-hvDpy38G > table > tbody > tr.row-hvDpy38G > td"
+    pivot_selector = "div.container-hvDpy38G.tabletVertical-hvDpy38G > div.container-Tv7LSjUz > div.wrapper-Tv7LSjUz > div > table > tbody > tr.row-hvDpy38G > td"
+
+    intervals = ["1m"]  # "5m", "15m", "30m", "1h", "2h", "4h", "1D", "1W", "1M"]
     for interval in intervals:
-        interval_bttn: WebElement = WebDriverWait(
-            driver=driver, timeout=5, poll_frequency=0.1
-        ).until(EC.presence_of_element_located((By.ID, interval)))
-        interval_bttn.click()
+        await page.wait_for_selector(f'button[id="{interval}"]')
+        await page.click(f'button[id="{interval}"]', timeout=300)
 
-        oscillators: list[IndicatorDTO] = fetch_indicators(
-            driver, oscillator_table, interval, pair
+        price = await fetch_price(page)
+        oscillators = await fetch_indicators(page, oscillator_selector, interval, pair)
+        moving_averages = await fetch_indicators(
+            page, moving_avg_selector, interval, pair
         )
+        pivots = await fetch_pivots(page, pivot_selector, interval, pair)
 
-        moving_averages: list[IndicatorDTO] = fetch_indicators(
-            driver, moving_average_table, interval, pair
+        asset = financialDTO(
+            pair=pair,
+            price=price,
+            oscillators=oscillators,
+            moving_averages=moving_averages,
+            pivots=pivots,
         )
+        print(f"Asset: {asset}")
+        print("--" * 20 + "\n")
 
-        pivots: list[PivotDTO] = fetch_pivots(driver, pivot_table, interval, pair)
 
-        print(f"INTERVAL = {interval}, PAIR = {pair}")
-        print("Oscillators:")
-        pprint(oscillators)
-        print("\nMoving Averages:")
-        pprint(moving_averages)
-        print("\nPivots:")
-        pprint(pivots)
-        print()
+async def main():
+    with open("pairs.json") as f:
+        pairs = json.load(f)
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        context = await browser.new_context()
+        page = await context.new_page()
+        for pair in pairs:
+            await scrape_pair(pair, page)
 
 
 if __name__ == "__main__":
-    pairs: list[str] = json.loads(open("pairs.json").read())
-
-    # from concurrent.futures import ThreadPoolExecutor
-    # with ThreadPoolExecutor(max_workers=3) as executor:
-    #     executor.map(scrape_pair, pairs)
-
-    for pair in pairs:
-        scrape_pair(pair)
+    asyncio.run(main())
