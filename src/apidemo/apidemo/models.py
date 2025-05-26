@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from enum import Enum
 
+
 class TimeInterval(str, Enum):
     m1 = "1m"
     m5 = "5m"
@@ -12,6 +13,7 @@ class TimeInterval(str, Enum):
     d1 = "1D"
     w1 = "1W"
     M1 = "1M"
+
 
 class IndicatorDTO(BaseModel):
     pair: str
@@ -45,5 +47,6 @@ class financialDTO(BaseModel):
 class PairRequest(BaseModel):
     pairs: list[str]
     intervals: list[TimeInterval]
+
 
 # ["1m" "5m", "15m", "30m", "1h", "2h", "4h", "1D", "1W", "1M"]

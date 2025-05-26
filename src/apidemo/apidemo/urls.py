@@ -1,5 +1,4 @@
-"""
-URL configuration for apidemo project.
+"""URL configuration for apidemo project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -21,7 +20,6 @@ from .scrape_pairs import main
 from .models import PairRequest
 
 api = NinjaAPI()
-
 
 
 @api.post("/scrape_pairs")

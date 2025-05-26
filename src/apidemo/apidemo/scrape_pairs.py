@@ -1,5 +1,4 @@
 import asyncio
-import json
 from datetime import datetime
 from .models import IndicatorDTO, PivotDTO, financialDTO, PairRequest
 from playwright.async_api import async_playwright, Page
@@ -67,7 +66,9 @@ async def fetch_price(page: Page) -> float:
     return float(price_clean)
 
 
-async def scrape_pair(pair: str, page: Page, intervals: list[str]) -> list[financialDTO]:
+async def scrape_pair(
+    pair: str, page: Page, intervals: list[str]
+) -> list[financialDTO]:
     url = f"https://tradingview.com/symbols/{pair}/technicals/"
     all_times_payload: list[financialDTO] = []
     await page.goto(url, wait_until="domcontentloaded")
@@ -97,13 +98,16 @@ async def scrape_pair(pair: str, page: Page, intervals: list[str]) -> list[finan
         all_times_payload.append(asset)
         print(f"Asset: {asset}")
         print("--" * 20 + "\n")
-        
+
     return all_times_payload
-    
+
 
 semaphore = asyncio.Semaphore(5)  # máximo 5 pares ao mesmo tempo
 
-async def scrape_pair_with_semaphore(pair: str, res_payload, context) -> tuple[str, list[financialDTO]]:
+
+async def scrape_pair_with_semaphore(
+    pair: str, res_payload, context
+) -> tuple[str, list[financialDTO]]:
     async with semaphore:
         page = await context.new_page()
         try:
@@ -111,6 +115,7 @@ async def scrape_pair_with_semaphore(pair: str, res_payload, context) -> tuple[s
             return pair, result
         finally:
             await page.close()
+
 
 async def main(req_pairs: PairRequest) -> dict[str, list[financialDTO]]:
     total_pares = req_pairs.pairs
