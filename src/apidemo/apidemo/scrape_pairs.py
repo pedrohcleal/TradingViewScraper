@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime
-from models import IndicatorDTO, PivotDTO, financialDTO
+from .models import IndicatorDTO, PivotDTO, financialDTO, PairRequest
 from playwright.async_api import async_playwright, Page
 import re
 
@@ -67,16 +67,15 @@ async def fetch_price(page: Page) -> float:
     return float(price_clean)
 
 
-async def scrape_pair(pair: str, page: Page):
+async def scrape_pair(pair: str, page: Page, intervals: list[str]) -> list[financialDTO]:
     url = f"https://tradingview.com/symbols/{pair}/technicals/"
-
+    all_times_payload: list[financialDTO] = []
     await page.goto(url, wait_until="domcontentloaded")
 
     oscillator_selector = "div:nth-child(1)> div.tableWrapper-hvDpy38G > table > tbody > tr.row-hvDpy38G > *"
     moving_avg_selector = "div.container-hvDpy38G.maTable-kg4MJrFB.tableWithAction-kg4MJrFB.tabletVertical-kg4MJrFB.tabletVertical-hvDpy38G > div.tableWrapper-hvDpy38G > table > tbody > tr.row-hvDpy38G > td"
     pivot_selector = "div.container-hvDpy38G.tabletVertical-hvDpy38G > div.container-Tv7LSjUz > div.wrapper-Tv7LSjUz > div > table > tbody > tr.row-hvDpy38G > td"
 
-    intervals = ["1m"]  # "5m", "15m", "30m", "1h", "2h", "4h", "1D", "1W", "1M"]
     for interval in intervals:
         await page.wait_for_selector(f'button[id="{interval}"]')
         await page.click(f'button[id="{interval}"]', timeout=300)
@@ -95,21 +94,44 @@ async def scrape_pair(pair: str, page: Page):
             moving_averages=moving_averages,
             pivots=pivots,
         )
+        all_times_payload.append(asset)
         print(f"Asset: {asset}")
         print("--" * 20 + "\n")
+        
+    return all_times_payload
+    
 
+semaphore = asyncio.Semaphore(5)  # máximo 5 pares ao mesmo tempo
 
-async def main():
-    with open("pairs.json") as f:
-        pairs = json.load(f)
+async def scrape_pair_with_semaphore(pair: str, res_payload, context) -> tuple[str, list[financialDTO]]:
+    async with semaphore:
+        page = await context.new_page()
+        try:
+            result = await scrape_pair(pair, page, res_payload)
+            return pair, result
+        finally:
+            await page.close()
+
+async def main(req_pairs: PairRequest) -> dict[str, list[financialDTO]]:
+    total_pares = req_pairs.pairs
+    total_times = [x.value for x in req_pairs.intervals]
+    print(f"Received pairs: {total_pares} with intervals: {total_times}")
+    res_payload: dict[str, list[financialDTO]] = {}
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         context = await browser.new_context()
-        page = await context.new_page()
-        for pair in pairs:
-            await scrape_pair(pair, page)
 
+        tasks = [
+            scrape_pair_with_semaphore(pair, total_times, context)
+            for pair in total_pares
+        ]
 
-if __name__ == "__main__":
-    asyncio.run(main())
+        results = await asyncio.gather(*tasks)
+
+        for pair, data in results:
+            res_payload[pair] = data
+
+        await browser.close()
+
+    return res_payload
